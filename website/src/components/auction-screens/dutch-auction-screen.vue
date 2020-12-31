@@ -71,7 +71,7 @@ export default {
       default: null,
     },
     players: {
-      type: Array,
+      type: Object,
       required: true,
     },
     selfPlayer: {
@@ -86,7 +86,7 @@ export default {
     },
     cardColor() {
       if (this.buyerPlayer !== null) return this.buyerPlayer.color;
-      if (this.currentPrice === this.options.endingPrice) return 'grey darken-1';
+      if (this.currentPrice === this.options.endingPrice) return 'grey lighten-1';
       return undefined;
     },
   },

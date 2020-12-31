@@ -7,7 +7,11 @@ export default class DutchAuctionRoom extends BaseRoom {
 
   private currentPrice: number | null = null;
 
+  private intervalId: NodeJS.Timeout | null = null;
+
   private timeoutId: NodeJS.Timeout | null = null;
+
+  private pausedState: 'interval' | 'timeout' | null = null;
 
   private buyer: {
     playerId: string;
@@ -59,22 +63,51 @@ export default class DutchAuctionRoom extends BaseRoom {
         this.setState('in-progress');
         this.currentPrice = this.auctionOptions.startingPrice;
         this.socketNamespace.emit('update:current-price', this.currentPrice);
-        const steps = (this.auctionOptions.startingPrice - this.auctionOptions.endingPrice) / this.auctionOptions.multiplier;
-        const timePerStep = this.auctionOptions.totalTime / steps;
-        this.timeoutId = setInterval(() => {
-          if (this.currentPrice === null) this.currentPrice = this.auctionOptions.startingPrice; // This should never happen
-          this.currentPrice -= this.auctionOptions.multiplier;
-          if (this.currentPrice <= this.auctionOptions.endingPrice) {
-            this.currentPrice = this.auctionOptions.endingPrice;
-            if (this.timeoutId !== null) clearInterval(this.timeoutId);
-            this.timeoutId = setTimeout(() => {
-              this.setState('finished');
-              this.timeoutId = null;
-            }, 5000);
-          }
-          this.socketNamespace.emit('update:current-price', this.currentPrice);
-        }, timePerStep);
+        this.startInterval();
       });
     });
+  }
+
+  private startInterval(): void {
+    if (this.intervalId !== null) clearInterval(this.intervalId);
+    const steps = (this.auctionOptions.startingPrice - this.auctionOptions.endingPrice) / this.auctionOptions.multiplier;
+    const timePerStep = this.auctionOptions.totalTime / steps;
+    this.intervalId = setInterval(() => {
+      if (this.currentPrice === null) this.currentPrice = this.auctionOptions.startingPrice; // This should never happen
+      this.currentPrice -= this.auctionOptions.multiplier;
+      if (this.currentPrice <= this.auctionOptions.endingPrice) {
+        this.currentPrice = this.auctionOptions.endingPrice;
+        if (this.intervalId !== null) clearInterval(this.intervalId);
+        this.intervalId = null;
+        this.startTimeout();
+      }
+      this.socketNamespace.emit('update:current-price', this.currentPrice);
+    }, timePerStep);
+  }
+
+  private startTimeout() {
+    if (this.timeoutId !== null) clearTimeout(this.timeoutId);
+    this.timeoutId = setTimeout(() => {
+      this.setState('finished');
+      this.timeoutId = null;
+    }, 5000);
+  }
+
+  protected pause(): void {
+    if (this.intervalId !== null) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+      this.pausedState = 'interval';
+    } else if (this.timeoutId !== null) {
+      clearTimeout(this.timeoutId);
+      this.timeoutId = null;
+      this.pausedState = 'timeout';
+    }
+  }
+
+  protected resume(): void {
+    if (this.pausedState === 'interval') this.startInterval();
+    else if (this.pausedState === 'timeout') this.startTimeout();
+    this.pausedState = null;
   }
 }

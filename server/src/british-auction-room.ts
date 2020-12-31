@@ -66,12 +66,7 @@ export default class BritishAuctionRoom extends BaseRoom {
               playerId,
               price: body.price,
             });
-            if (this.endTime) clearTimeout(this.endTime.timeoutId);
-            this.endTime = {
-              timestamp: Date.now() + this.auctionOptions.timePerBid,
-              timeoutId: setTimeout(this.timeout.bind(this), this.auctionOptions.timePerBid + 1000),
-            };
-            this.socketNamespace.emit('time-left', this.getTimeLeft());
+            this.startTimeout();
             this.socketNamespace.emit('lock');
             this.socketNamespace.emit('update:bid-history', this.bidHistory);
           },
@@ -99,5 +94,24 @@ export default class BritishAuctionRoom extends BaseRoom {
     this.endTime = null;
     this.socketNamespace.emit('time-left', null);
     this.setState('finished');
+  }
+
+  private startTimeout(): void {
+    if (this.endTime) clearTimeout(this.endTime.timeoutId);
+    this.endTime = {
+      timestamp: Date.now() + this.auctionOptions.timePerBid,
+      timeoutId: setTimeout(this.timeout.bind(this), this.auctionOptions.timePerBid + 1000),
+    };
+    this.socketNamespace.emit('time-left', this.getTimeLeft());
+  }
+
+  protected pause(): void {
+    if (this.endTime !== null) clearTimeout(this.endTime.timeoutId);
+    this.endTime = null;
+    this.socketNamespace.emit('time-left', null);
+  }
+
+  protected resume(): void {
+    this.startTimeout();
   }
 }

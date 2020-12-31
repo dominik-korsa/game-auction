@@ -6,7 +6,7 @@ import { ExtendedError } from 'socket.io/dist/namespace';
 import { InCreatePlayer, RoomPlayer, RoomState } from './types';
 import { verifyRoomToken } from './utils';
 
-export default class BaseRoom {
+export default abstract class BaseRoom {
   public readonly id: string;
 
   private code: number | null;
@@ -18,6 +18,8 @@ export default class BaseRoom {
   protected readonly players = new Map<string, RoomPlayer>();
 
   private state: RoomState = 'not-started';
+
+  private paused = false;
 
   protected constructor(socketServer: SocketIO.Server, code: number) {
     this.id = nanoid();
@@ -36,6 +38,7 @@ export default class BaseRoom {
       socket.emit('update:code', this.getCode());
       socket.emit('update:state', this.getState());
       socket.emit('update:players', this.getPlayersObject());
+      socket.emit('update:paused', this.paused);
 
       socket.on('create-player', (msg) => {
         pipe(InCreatePlayer.decode(msg), fold(
@@ -55,6 +58,33 @@ export default class BaseRoom {
 
       socket.on('disconnect', () => {
         this.socketsPlayerId.delete(socket.id);
+      });
+
+      socket.on('pause', () => {
+        if (this.paused) {
+          console.warn('Already paused');
+          return;
+        }
+
+        if (this.state !== 'in-progress') {
+          console.warn(`Pause attempted in ${this.getState()} state`);
+          return;
+        }
+
+        this.pause();
+        this.paused = true;
+        this.socketNamespace.emit('update:paused', true);
+      });
+
+      socket.on('resume', () => {
+        if (!this.paused) {
+          console.warn('Already resumed');
+          return;
+        }
+
+        this.resume();
+        this.paused = false;
+        this.socketNamespace.emit('update:paused', false);
       });
     });
   }
@@ -112,4 +142,8 @@ export default class BaseRoom {
   protected getPlayerId(socketId: string): string | null {
     return this.socketsPlayerId.get(socketId) ?? null;
   }
+
+  protected abstract pause(): void;
+
+  protected abstract resume(): void;
 }

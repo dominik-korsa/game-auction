@@ -7,51 +7,64 @@
     <h4 class="text-h4 mt-12">{{ loadingText }}</h4>
   </v-container>
   <v-main v-else class="fill-win-height">
-    <v-app-bar app>
-      <v-btn icon large to="/">
-        <v-icon>
-          mdi-arrow-left
-        </v-icon>
-      </v-btn>
-      <v-spacer />
-      <div v-if="$vuetify.breakpoint.width > 360">
-        Kod: <b>{{ code }}</b>
-      </div>
-      <qr-dialog :code="code">
-        <template #activator="{ on }">
-          <v-btn icon class="ml-1" v-on="on">
-            <v-icon>
-              mdi-qrcode
-            </v-icon>
-          </v-btn>
-        </template>
-      </qr-dialog>
-      <v-btn v-if="isFullscreen" icon class="ml-1" @click="exitFullscreen">
-        <v-icon >
-          mdi-fullscreen-exit
-        </v-icon>
-      </v-btn>
-      <v-btn v-else icon class="ml-1" @click="requestFullscreen">
-        <v-icon>
-          mdi-fullscreen
-        </v-icon>
-      </v-btn>
-      <create-player-dialog
-        v-if="selfPlayer === null"
-        :socket="socket"
-        :players-array="playersArray"
-      >
-        <template #activator="{ on }">
-          <v-btn
-            color="primary"
-            class="ml-1"
-            v-on="on"
-          >
-            Graj
-          </v-btn>
-        </template>
-      </create-player-dialog>
-    </v-app-bar>
+    <v-overlay absolute :value="paused">
+      <v-card outlined light class="d-flex flex-column">
+        <v-icon :size="128" class="align-self-center" color="primary">mdi-pause</v-icon>
+        <v-divider />
+        <v-card-title>Aukcja wstrzymana</v-card-title>
+        <v-card-actions>
+          <v-btn block outlined color="primary" @click="resume">Wznów</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-overlay>
+      <v-app-bar app>
+        <v-btn icon large to="/">
+          <v-icon>
+            mdi-arrow-left
+          </v-icon>
+        </v-btn>
+        <v-spacer />
+        <div v-if="$vuetify.breakpoint.width > 360">
+          Kod: <b>{{ code }}</b>
+        </div>
+        <qr-dialog :code="code">
+          <template #activator="{ on }">
+            <v-btn icon class="ml-1" v-on="on">
+              <v-icon>
+                mdi-qrcode
+              </v-icon>
+            </v-btn>
+          </template>
+        </qr-dialog>
+        <v-btn icon class="ml-1" @click="pause" v-if="state === 'in-progress'">
+          <v-icon>mdi-pause</v-icon>
+        </v-btn>
+        <v-btn v-if="isFullscreen" icon class="ml-1" @click="exitFullscreen">
+          <v-icon >
+            mdi-fullscreen-exit
+          </v-icon>
+        </v-btn>
+        <v-btn v-else icon class="ml-1" @click="requestFullscreen">
+          <v-icon>
+            mdi-fullscreen
+          </v-icon>
+        </v-btn>
+        <create-player-dialog
+          v-if="selfPlayer === null"
+          :socket="socket"
+          :players-array="playersArray"
+        >
+          <template #activator="{ on }">
+            <v-btn
+              color="primary"
+              class="ml-1"
+              v-on="on"
+            >
+              Graj
+            </v-btn>
+          </template>
+        </create-player-dialog>
+      </v-app-bar>
     <not-started-screen
       v-if="state === 'not-started'"
       :players-array="playersArray"
@@ -120,6 +133,7 @@ export default {
     bidHistory: null,
     currentPrice: null,
     buyer: null,
+    paused: null,
 
     countdownTime: null,
     endTimestamp: null,
@@ -145,6 +159,7 @@ export default {
     this.socket.on('update:bid-history', (history) => { this.bidHistory = history; });
     this.socket.on('update:current-price', (price) => { this.currentPrice = price; });
     this.socket.on('update:buyer', (buyer) => { this.buyer = buyer; });
+    this.socket.on('update:paused', (paused) => { this.paused = paused; });
     this.socket.on('time-left', (timeLeft) => {
       if (timeLeft === null) this.endTimestamp = null;
       else this.endTimestamp = Date.now() + timeLeft;
@@ -163,6 +178,7 @@ export default {
       this.bidHistory = null;
       this.currentPrice = null;
       this.buyer = null;
+      this.paused = null;
 
       this.countdownTime = null;
       this.connected = true;
@@ -202,6 +218,12 @@ export default {
       }
       navigator.vibrate(500);
     },
+    pause() {
+      this.socket.emit('pause');
+    },
+    resume() {
+      this.socket.emit('resume');
+    },
   },
   computed: {
     loadingText() {
@@ -209,6 +231,7 @@ export default {
       if (!this.options) return 'Wczytywanie opcji aukcji';
       if (!this.players) return 'Wczytywanie listy graczy';
       if (!this.state) return 'Wczytywanie stanu gry';
+      if (this.paused === null) return 'Wczytywanie informacji o pauzie';
       if (this.options.type === 'british') {
         if (!this.bidHistory) return 'Wczytywanie historii ofert';
       }
