@@ -161,7 +161,7 @@ export default {
     async countdown() {
       for (let i = 3; i > 0; i -= 1) {
         this.countdownTime = i;
-        navigator.vibrate(100);
+        navigator.vibrate(200);
         // eslint-disable-next-line no-await-in-loop
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }

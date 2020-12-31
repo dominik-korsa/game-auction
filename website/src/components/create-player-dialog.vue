@@ -8,7 +8,7 @@
         <v-card-title>
           Zagraj w aukcji
         </v-card-title>
-        <v-card-text class="pt-4">
+        <v-card-text class="pb-2">
           <v-text-field
             v-model="name"
             label="Nick"
@@ -51,7 +51,6 @@
             </div>
           </v-expand-transition>
           <template v-if="playersArray.length > 0">
-            <v-divider class="my-4" />
             <div class="text-subtitle-1">Kolory innych graczy</div>
             <div class="d-flex flex-wrap py-1">
               <v-chip

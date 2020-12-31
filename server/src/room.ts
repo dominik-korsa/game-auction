@@ -133,7 +133,6 @@ export default class Room {
   }
 
   private timeout() {
-    console.log('timeout');
     this.endTime = null;
     this.socketNamespace.emit('time-left', null);
     this.state = 'finished';
