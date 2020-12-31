@@ -15,10 +15,20 @@ dotenv.config();
 const rooms = new Map<string, Room>();
 
 const app = express();
-app.use(cors({
-  origin: '*',
-}));
 app.use(bodyParser.json());
+
+if (process.env.WEBSITE_BUILD_PATH !== undefined) {
+  console.log('Serving website');
+  app.use(express.static(process.env.WEBSITE_BUILD_PATH));
+  app.use(cors({
+    origin: false,
+  }));
+} else {
+  app.use(cors({
+    origin: '*',
+  }));
+}
+
 const server = http.createServer(app);
 const socketServer = new SocketIO.Server(server, {
   cors: {
