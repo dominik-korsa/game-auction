@@ -1,14 +1,35 @@
 <template>
-  <v-card outlined class="py-2 py-sm-4 align-self-stretch">
-    <div class="px-2 px-sm-4">
+  <v-card outlined class="py-2 py-sm-3 align-self-stretch">
+    <div
+      v-if="lastBidPrice === null"
+      class="px-2 px-sm-4"
+    >
       <v-btn
-        v-if="lastBidPrice === null"
         outlined
         block
-        class="mb-4"
+        class="mb-2 mb-sm-3"
         @click="bid(options.startingPrice)"
       >
-        Zalictuj cenę wywoławczą
+        Cena wywoławcza ({{ options.startingPrice }} {{ options.currency }})
+      </v-btn>
+    </div>
+    <div class="px-sm-2 d-flex">
+      <v-btn
+        v-for="button in bidButtons"
+        :key="button.base"
+        outlined
+        class="mx-2 mb-2 mb-sm-3 grow text-decoration-none"
+        :height="lastBidPrice === null ? undefined : 56"
+        @click="bid(button.bid)"
+      >
+        <div>
+          <div class="mb-1 text--disabled" v-if="lastBidPrice !== null">
+            +{{ button.increase }} {{ options.currency }}
+          </div>
+          <div>
+            {{ button.bid }} {{ options.currency }}
+          </div>
+        </div>
       </v-btn>
     </div>
     <v-divider/>
@@ -111,6 +132,17 @@ export default {
         correction,
         valid: minPriceValid,
       };
+    },
+    bidButtons() {
+      const current = _.defaultTo(this.lastBidPrice, this.options.startingPrice);
+      return [1, 2, 5].map((base) => {
+        const increase = this.options.minIncrement * base;
+        return ({
+          base,
+          increase,
+          bid: current + increase,
+        });
+      });
     },
   },
   methods: {
