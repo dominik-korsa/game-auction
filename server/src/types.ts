@@ -6,13 +6,26 @@ export interface RoomTokenPayload {
   playerId: string;
 }
 
-export const AuctionOptions = t.type({
+export const BritishAuctionOptions = t.type({
+  type: t.literal('british'),
   currency: t.string,
   multiplier: t.number,
   startingPrice: t.number,
   minIncrement: t.number,
   timePerBid: t.number,
 });
+export type BritishAuctionOptions = t.TypeOf<typeof BritishAuctionOptions>;
+
+export const DutchAuctionOptions = t.type({
+  type: t.literal('dutch'),
+  currency: t.string,
+  multiplier: t.number,
+  startingPrice: t.number,
+  endingPrice: t.number,
+  totalTime: t.number,
+});
+
+export const AuctionOptions = t.union([BritishAuctionOptions, DutchAuctionOptions]);
 export type AuctionOptions = t.TypeOf<typeof AuctionOptions>;
 
 export const CreateRoomBody = t.type({
@@ -39,14 +52,4 @@ export const InCreatePlayer = t.type({
   color: t.string,
 });
 
-export const InBid = t.type({
-  price: t.number,
-});
-
 export type RoomState = 'not-started' | 'countdown' | 'in-progress' | 'finished';
-
-export interface HistoryBid {
-  id: string;
-  playerId: string;
-  price: number;
-}

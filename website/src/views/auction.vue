@@ -87,7 +87,7 @@ import QrDialog from '@/components/qr-dialog.vue';
 import CreatePlayerDialog from '@/components/create-player-dialog.vue';
 import _ from 'lodash';
 import NotStartedScreen from '@/components/auction-screens/not-started-screen.vue';
-import StartedScreen from '@/components/auction-screens/started-screen.vue';
+import StartedScreen from '@/components/auction-screens/british-auction-screen.vue';
 
 export default {
   components: {

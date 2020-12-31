@@ -1,6 +1,6 @@
 <template>
   <v-container
-    class="auction-started-screen fill-height flex-column flex-nowrap align-stretch overflow-y-auto"
+    class="british-auction-screen fill-height flex-column flex-nowrap align-stretch overflow-y-auto"
   >
     <v-card
       :color="lastBid === null ? 'grey darken-3' : lastBid.player.color"
@@ -154,7 +154,7 @@ export default {
 </script>
 
 <style lang="scss">
-.auction-started-screen {
+.british-auction-screen {
   max-width: 600px;
 
   .timeline-card {
