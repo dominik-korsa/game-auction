@@ -18,6 +18,21 @@ const rooms = new Map<string, Room>();
 const app = express();
 app.use(bodyParser.json());
 
+if (process.env.WEBSITE_BUILD_PATH !== undefined) {
+  console.log('Serving website');
+  app.use(history({
+    index: 'index.html',
+  }));
+  app.use(express.static(process.env.WEBSITE_BUILD_PATH));
+  app.use(cors({
+    origin: false,
+  }));
+} else {
+  app.use(cors({
+    origin: '*',
+  }));
+}
+
 const server = http.createServer(app);
 const socketServer = new SocketIO.Server(server, {
   cors: {
@@ -41,21 +56,6 @@ const restApi = new RestApi(app, {
     return room.id;
   },
 });
-
-if (process.env.WEBSITE_BUILD_PATH !== undefined) {
-  console.log('Serving website');
-  app.use(history({
-    index: 'index.html',
-  }));
-  app.use(express.static(process.env.WEBSITE_BUILD_PATH));
-  app.use(cors({
-    origin: false,
-  }));
-} else {
-  app.use(cors({
-    origin: '*',
-  }));
-}
 
 const port = requireEnv('PORT');
 server.listen((port), () => {
