@@ -1,0 +1,213 @@
+<template>
+  <v-container
+    v-if="loadingText !== null"
+    class="d-flex align-center justify-center flex-column fill-height"
+  >
+    <v-progress-circular indeterminate :size="96" color="primary" />
+    <h4 class="text-h4 mt-12">{{ loadingText }}</h4>
+  </v-container>
+  <v-main v-else class="fill-win-height">
+    <v-app-bar app>
+      <v-btn icon large to="/">
+        <v-icon>
+          mdi-arrow-left
+        </v-icon>
+      </v-btn>
+      <v-spacer />
+      <div v-if="$vuetify.breakpoint.width > 360">
+        Kod: <b>{{ code }}</b>
+      </div>
+      <qr-dialog :code="code">
+        <template #activator="{ on }">
+          <v-btn icon class="ml-1" v-on="on">
+            <v-icon>
+              mdi-qrcode
+            </v-icon>
+          </v-btn>
+        </template>
+      </qr-dialog>
+      <v-btn v-if="isFullscreen" icon class="ml-1" @click="exitFullscreen">
+        <v-icon >
+          mdi-fullscreen-exit
+        </v-icon>
+      </v-btn>
+      <v-btn v-else icon class="ml-1" @click="requestFullscreen">
+        <v-icon>
+          mdi-fullscreen
+        </v-icon>
+      </v-btn>
+      <create-player-dialog
+        v-if="selfPlayer === null"
+        :socket="socket"
+        :players-array="playersArray"
+      >
+        <template #activator="{ on }">
+          <v-btn
+            color="primary"
+            class="ml-1"
+            v-on="on"
+          >
+            Graj
+          </v-btn>
+        </template>
+      </create-player-dialog>
+    </v-app-bar>
+    <not-started-screen
+      v-if="state === 'not-started'"
+      :players-array="playersArray"
+      :self-player="selfPlayer"
+      :socket="socket"
+      :options="options"
+      :player-id="playerId"
+    />
+    <v-container
+      v-else-if="state === 'countdown'"
+      class="auction-countdown-screen fill-height d-flex align-center justify-center text-center"
+    >
+      <h2 class="text-h4 text-sm-h3" v-if="countdownTime === null">Startowanie</h2>
+      <h1 class="countdown-time" v-else>{{ countdownTime }}</h1>
+    </v-container>
+    <started-screen
+      v-else
+      :options="options"
+      :self-player="selfPlayer"
+      :socket="socket"
+      :bid-history="bidHistory"
+      :players="players"
+      :end-timestamp="endTimestamp"
+      :finished="state === 'finished'"
+    />
+  </v-main>
+</template>
+
+<script>
+import { io } from 'socket.io-client';
+import QrDialog from '@/components/qr-dialog.vue';
+import CreatePlayerDialog from '@/components/create-player-dialog.vue';
+import _ from 'lodash';
+import NotStartedScreen from '@/components/auction-screens/not-started-screen.vue';
+import StartedScreen from '@/components/auction-screens/started-screen.vue';
+
+export default {
+  components: {
+    StartedScreen,
+    NotStartedScreen,
+    CreatePlayerDialog,
+    QrDialog,
+  },
+  data: () => ({
+    playerId: null,
+    socket: null,
+    connected: false,
+    code: null,
+    options: null,
+    players: null,
+    state: null,
+    bidHistory: null,
+    countdownTime: null,
+    endTimestamp: null,
+    isFullscreen: false,
+  }),
+  created() {
+    navigator.vibrate(0);
+    const roomString = localStorage.getItem('room');
+    if (roomString === null) this.$router.push('/');
+    const room = JSON.parse(roomString);
+    this.playerId = room.playerId;
+    const url = new URL(`/room/${room.roomId}`, this.$app.serverHost).toString();
+    this.socket = io(url, {
+      auth: {
+        roomAccessToken: `bearer ${room.token}`,
+      },
+    });
+    this.socket.on('update:code', (code) => { this.code = code; });
+    this.socket.on('update:auction-options', (options) => { this.options = options; });
+    this.socket.on('update:players', (players) => { this.players = players; });
+    this.socket.on('update:state', (state) => { this.state = state; });
+    this.socket.on('update:bid-history', (history) => { this.bidHistory = history; });
+    this.socket.on('time-left', (timeLeft) => {
+      if (timeLeft === null) this.endTimestamp = null;
+      else this.endTimestamp = Date.now() + timeLeft;
+    });
+    this.socket.on('connect', () => {
+      this.code = null;
+      this.options = null;
+      this.players = null;
+      this.state = null;
+      this.bidHistory = null;
+      this.countdownTime = null;
+      this.connected = true;
+    });
+    this.socket.on('disconnect', () => { this.connected = false; });
+    this.socket.on('connect_error', (error) => {
+      console.error(error);
+      this.$router.push('/');
+    });
+    this.updateIsFullscreen();
+    document.addEventListener('fullscreenchange', this.updateIsFullscreen);
+  },
+  methods: {
+    async requestFullscreen() {
+      await document.documentElement.requestFullscreen({
+        navigationUI: 'hide',
+      });
+    },
+    async exitFullscreen() {
+      await document.exitFullscreen();
+    },
+    updateIsFullscreen() {
+      this.isFullscreen = document.fullscreenElement !== null;
+    },
+    async countdown() {
+      for (let i = 3; i > 0; i -= 1) {
+        this.countdownTime = i;
+        navigator.vibrate(100);
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+      navigator.vibrate(500);
+    },
+  },
+  computed: {
+    loadingText() {
+      if (!this.connected) return 'Łączenie z serwerem';
+      if (!this.options) return 'Wczytywanie opcji aukcji';
+      if (!this.players) return 'Wczytywanie listy graczy';
+      if (!this.state) return 'Wczytywanie stanu gry';
+      if (!this.bidHistory) return 'Wczytywanie historii ofert';
+      return null;
+    },
+    selfPlayer() {
+      return this.players[this.playerId] || null;
+    },
+    playersArray() {
+      return _.values(this.players);
+    },
+  },
+  watch: {
+    state: {
+      handler(value, oldValue) {
+        if (value === 'countdown') {
+          if (oldValue === 'not-started') this.countdown();
+          else this.countdownTime = null;
+        }
+      },
+      immediate: true,
+    },
+  },
+  destroyed() {
+    if (document.fullscreenElement !== null) document.exitFullscreen();
+    document.removeEventListener('fullscreenchange', this.updateIsFullscreen);
+    if (this.socket) this.socket.close();
+  },
+};
+</script>
+
+<style lang="scss">
+  .auction-countdown-screen {
+    .countdown-time {
+      font-size: 15em;
+      font-weight: 300;
+    }
+  }
+</style>
