@@ -8,4 +8,8 @@
   .fill-win-height {
     height: 100vh;
   }
+
+  .no-basis {
+    flex-basis: 0;
+  }
 </style>

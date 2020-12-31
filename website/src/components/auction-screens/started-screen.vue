@@ -28,8 +28,8 @@
         rounded
       />
     </v-sheet>
-    <v-card outlined class="overflow-y-auto pr-2 timeline-card">
-      <v-timeline dense>
+    <v-card outlined class="overflow-y-auto pr-2 timeline-card grow d-flex flex-column no-basis">
+      <v-timeline dense class="grow">
         <v-timeline-item
           v-for="bid in bidHistoryItems"
           :key="bid.id"
@@ -57,7 +57,6 @@
         </v-timeline-item>
       </v-timeline>
     </v-card>
-    <v-spacer />
     <bid-picker
       class="mt-2"
       v-if="selfPlayer !== null && !finished"
