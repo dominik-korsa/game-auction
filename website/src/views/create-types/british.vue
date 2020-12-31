@@ -148,7 +148,7 @@ export default {
           },
         );
         const body = await response.json();
-        localStorage.setItem('room', JSON.stringify({
+        sessionStorage.setItem('room', JSON.stringify({
           roomId: body.roomId,
           playerId: body.playerId,
           token: body.roomToken,

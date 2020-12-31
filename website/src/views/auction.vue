@@ -128,7 +128,7 @@ export default {
   }),
   created() {
     navigator.vibrate(0);
-    const roomString = localStorage.getItem('room');
+    const roomString = sessionStorage.getItem('room');
     if (roomString === null) this.$router.push('/');
     const room = JSON.parse(roomString);
     this.playerId = room.playerId;
