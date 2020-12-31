@@ -76,6 +76,7 @@
       :players="players"
       :end-timestamp="endTimestamp"
       :finished="state === 'finished'"
+      :locked="locked"
     />
   </v-main>
 </template>
@@ -106,6 +107,7 @@ export default {
     bidHistory: null,
     countdownTime: null,
     endTimestamp: null,
+    lockTimeoutId: null,
     isFullscreen: false,
   }),
   created() {
@@ -129,6 +131,12 @@ export default {
       if (timeLeft === null) this.endTimestamp = null;
       else this.endTimestamp = Date.now() + timeLeft;
     });
+    this.socket.on('lock', () => {
+      if (this.lockTimeoutId !== null) clearTimeout(this.lockTimeoutId);
+      this.lockTimeoutId = setTimeout(() => {
+        this.lockTimeoutId = null;
+      }, 500);
+    });
     this.socket.on('connect', () => {
       this.code = null;
       this.options = null;
@@ -138,7 +146,13 @@ export default {
       this.countdownTime = null;
       this.connected = true;
     });
-    this.socket.on('disconnect', () => { this.connected = false; });
+    this.socket.on('disconnect', () => {
+      this.connected = false;
+      if (this.lockTimeoutId !== null) {
+        clearTimeout(this.lockTimeoutId);
+        this.lockTimeoutId = null;
+      }
+    });
     this.socket.on('connect_error', (error) => {
       console.error(error);
       this.$router.push('/');
@@ -182,6 +196,9 @@ export default {
     },
     playersArray() {
       return _.values(this.players);
+    },
+    locked() {
+      return this.lockTimeoutId !== null;
     },
   },
   watch: {

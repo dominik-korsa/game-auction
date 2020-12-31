@@ -21,9 +21,14 @@
         class="mx-2 mb-2 mb-sm-3 grow text-decoration-none"
         :height="lastBidPrice === null ? undefined : 56"
         @click="bid(button.bid)"
+        :disabled="locked"
       >
         <div>
-          <div class="mb-1 text--disabled" v-if="lastBidPrice !== null">
+          <div
+            class="mb-1"
+            :class="{'text--disabled': !locked}"
+            v-if="lastBidPrice !== null"
+          >
             +{{ button.increase }} {{ options.currency }}
           </div>
           <div>
@@ -96,6 +101,10 @@ export default {
     socket: {
       type: Object,
       required: true,
+    },
+    locked: {
+      type: Boolean,
+      default: false,
     },
   },
   data: () => ({

@@ -28,7 +28,7 @@
         rounded
       />
     </v-sheet>
-    <v-card outlined class="overflow-y-auto pr-2 timeline-card grow d-flex flex-column no-basis">
+    <v-card outlined class="overflow-y-auto pr-4 timeline-card grow d-flex flex-column no-basis">
       <v-timeline dense class="grow">
         <v-timeline-item
           v-for="bid in bidHistoryItems"
@@ -63,6 +63,7 @@
       :options="options"
       :socket="socket"
       :last-bid-price="lastBidPrice"
+      :locked="locked"
     />
   </v-container>
 </template>
@@ -99,6 +100,10 @@ export default {
       default: null,
     },
     finished: {
+      type: Boolean,
+      default: false,
+    },
+    locked: {
       type: Boolean,
       default: false,
     },

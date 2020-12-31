@@ -98,6 +98,7 @@ export default class Room {
               timeoutId: setTimeout(this.timeout.bind(this), this.auctionOptions.timePerBid + 1000),
             };
             this.socketNamespace.emit('time-left', this.getTimeLeft());
+            this.socketNamespace.emit('lock');
             this.socketNamespace.emit('update:bid-history', this.bidHistory);
           },
         ));
