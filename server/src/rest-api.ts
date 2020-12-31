@@ -22,13 +22,20 @@ export default class RestApi {
           });
         },
         (body) => {
-          const roomId = this.functions.createRoom(body.auctionOptions);
-          const playerId = nanoid();
-          res.send({
-            roomId,
-            playerId,
-            roomToken: createRoomToken(roomId, playerId),
-          });
+          try {
+            const roomId = this.functions.createRoom(body.auctionOptions);
+            const playerId = nanoid();
+            res.send({
+              roomId,
+              playerId,
+              roomToken: createRoomToken(roomId, playerId),
+            });
+          } catch (error) {
+            console.error(error);
+            res.status(500).send({
+              message: 'Could not create room',
+            });
+          }
         },
       ));
     });
@@ -42,20 +49,27 @@ export default class RestApi {
           });
         },
         (body) => {
-          const playerId = nanoid();
-          const roomId = this.functions.joinRoom(body.code);
-          if (!roomId) {
+          try {
+            const playerId = nanoid();
+            const roomId = this.functions.joinRoom(body.code);
+            if (!roomId) {
+              res.send({
+                found: false,
+              });
+              return;
+            }
             res.send({
-              found: false,
+              found: true,
+              roomId,
+              playerId,
+              roomToken: createRoomToken(roomId, playerId),
             });
-            return;
+          } catch (error) {
+            console.error(error);
+            res.status(500).send({
+              message: 'Could not join room',
+            });
           }
-          res.send({
-            found: true,
-            roomId,
-            playerId,
-            roomToken: createRoomToken(roomId, playerId),
-          });
         },
       ));
     });

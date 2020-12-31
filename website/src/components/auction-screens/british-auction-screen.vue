@@ -4,19 +4,18 @@
   >
     <v-card
       :color="lastBid === null ? 'grey darken-3' : lastBid.player.color"
-      outlined
       class="px-2 py-4 background-transition mb-2"
     >
       <div v-if="lastBid === null">
-        <h3 class="text-h3 text-center">Brak ofert</h3>
-        <h5 class="text-h5 text-center mt-3">
+        <div class="text-h3 text-center">Brak ofert</div>
+        <div class="text-h5 text-center mt-3">
           <span class="text--secondary">Cena wywoławcza:</span>
           {{ options.startingPrice }} {{ options.currency }}
-        </h5>
+        </div>
       </div>
       <div v-else>
-        <h3 class="text-h3 text-center">{{ lastBid.price }} {{ options.currency }}</h3>
-        <h5 class="text-h5 text-center mt-3">{{ lastBid.player.name }}</h5>
+        <div class="text-h3 text-center">{{ lastBid.price }} {{ options.currency }}</div>
+        <div class="text-h5 text-center mt-3">{{ lastBid.player.name }}</div>
       </div>
     </v-card>
     <v-sheet color="#fff4" rounded class="mb-2" v-if="this.progress !== null">

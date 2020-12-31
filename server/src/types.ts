@@ -24,6 +24,7 @@ export const DutchAuctionOptions = t.type({
   endingPrice: t.number,
   totalTime: t.number,
 });
+export type DutchAuctionOptions = t.TypeOf<typeof DutchAuctionOptions>;
 
 export const AuctionOptions = t.union([BritishAuctionOptions, DutchAuctionOptions]);
 export type AuctionOptions = t.TypeOf<typeof AuctionOptions>;

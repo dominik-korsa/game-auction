@@ -6,14 +6,16 @@ import dotenv from 'dotenv';
 import express from 'express';
 import _ from 'lodash';
 import SocketIO from 'socket.io';
+import BaseRoom from './base-room';
 import BritishAuctionRoom from './british-auction-room';
+import DutchAuctionRoom from './dutch-auction-room';
 import RestApi from './rest-api';
 import { AuctionOptions } from './types';
 import { requireEnv } from './utils';
 
 dotenv.config();
 
-const rooms = new Map<string, BritishAuctionRoom>();
+const rooms = new Map<string, BaseRoom>();
 
 const app = express();
 app.use(bodyParser.json());
@@ -48,6 +50,7 @@ const restApi = new RestApi(app, {
     } while (codes.includes(code));
     let room;
     if (auctionOptions.type === 'british') room = new BritishAuctionRoom(socketServer, code, auctionOptions);
+    else if (auctionOptions.type === 'dutch') room = new DutchAuctionRoom(socketServer, code, auctionOptions);
     else throw new Error('This type of auction is not yet supported');
     rooms.set(room.id, room);
     return room.id;

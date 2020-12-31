@@ -67,8 +67,8 @@
       <h2 class="text-h4 text-sm-h3" v-if="countdownTime === null">Startowanie</h2>
       <h1 class="countdown-time" v-else>{{ countdownTime }}</h1>
     </v-container>
-    <started-screen
-      v-else
+    <british-auction-screen
+      v-else-if="options.type === 'british'"
       :options="options"
       :self-player="selfPlayer"
       :socket="socket"
@@ -77,6 +77,16 @@
       :end-timestamp="endTimestamp"
       :finished="state === 'finished'"
       :locked="locked"
+    />
+    <dutch-auction-screen
+      v-else-if="options.type === 'dutch'"
+      :options="options"
+      :socket="socket"
+      :current-price="currentPrice"
+      :finished="state === 'finished'"
+      :buyer="buyer"
+      :players="players"
+      :self-player="selfPlayer"
     />
   </v-main>
 </template>
@@ -87,11 +97,13 @@ import QrDialog from '@/components/qr-dialog.vue';
 import CreatePlayerDialog from '@/components/create-player-dialog.vue';
 import _ from 'lodash';
 import NotStartedScreen from '@/components/auction-screens/not-started-screen.vue';
-import StartedScreen from '@/components/auction-screens/british-auction-screen.vue';
+import BritishAuctionScreen from '@/components/auction-screens/british-auction-screen.vue';
+import DutchAuctionScreen from '@/components/auction-screens/dutch-auction-screen.vue';
 
 export default {
   components: {
-    StartedScreen,
+    DutchAuctionScreen,
+    BritishAuctionScreen,
     NotStartedScreen,
     CreatePlayerDialog,
     QrDialog,
@@ -100,11 +112,15 @@ export default {
     playerId: null,
     socket: null,
     connected: false,
+
     code: null,
     options: null,
     players: null,
     state: null,
     bidHistory: null,
+    currentPrice: null,
+    buyer: null,
+
     countdownTime: null,
     endTimestamp: null,
     lockTimeoutId: null,
@@ -127,6 +143,8 @@ export default {
     this.socket.on('update:players', (players) => { this.players = players; });
     this.socket.on('update:state', (state) => { this.state = state; });
     this.socket.on('update:bid-history', (history) => { this.bidHistory = history; });
+    this.socket.on('update:current-price', (price) => { this.currentPrice = price; });
+    this.socket.on('update:buyer', (buyer) => { this.buyer = buyer; });
     this.socket.on('time-left', (timeLeft) => {
       if (timeLeft === null) this.endTimestamp = null;
       else this.endTimestamp = Date.now() + timeLeft;
@@ -143,6 +161,9 @@ export default {
       this.players = null;
       this.state = null;
       this.bidHistory = null;
+      this.currentPrice = null;
+      this.buyer = null;
+
       this.countdownTime = null;
       this.connected = true;
     });
@@ -188,7 +209,12 @@ export default {
       if (!this.options) return 'Wczytywanie opcji aukcji';
       if (!this.players) return 'Wczytywanie listy graczy';
       if (!this.state) return 'Wczytywanie stanu gry';
-      if (!this.bidHistory) return 'Wczytywanie historii ofert';
+      if (this.options.type === 'british') {
+        if (!this.bidHistory) return 'Wczytywanie historii ofert';
+      }
+      if (this.options.type === 'dutch') {
+        if (['in-progress', 'finished'].includes(this.state) && this.currentPrice === null) return 'Wczytywanie aktualnej ceny';
+      }
       return null;
     },
     selfPlayer() {

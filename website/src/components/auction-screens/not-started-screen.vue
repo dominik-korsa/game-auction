@@ -16,49 +16,7 @@
         Jesteś w trybie obserwatora. Naciśnij przycisk <b>graj</b>, aby wziąć udział w aukcji.
       </v-alert>
     </v-expand-transition>
-    <v-card outlined class="mb-4">
-      <v-card-title>Zasady aukcji</v-card-title>
-      <v-list subheader>
-        <!--          <v-list-item>-->
-        <!--            <v-list-item-content>-->
-        <!--              <v-list-item-subtitle class="text-overline">
-        Typ aukcji
-        </v-list-item-subtitle>-->
-        <!--              <v-list-item-title>Licytacja angielska</v-list-item-title>-->
-        <!--            </v-list-item-content>-->
-        <!--          </v-list-item>-->
-        <v-list-item>
-          <v-list-item-content>
-            <v-list-item-subtitle class="text-overline">Mnożnik</v-list-item-subtitle>
-            <v-list-item-title>
-              {{ options.multiplier }} {{ options.currency }}
-            </v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-        <v-list-item>
-          <v-list-item-content>
-            <v-list-item-subtitle class="text-overline">Cena wywoławcza</v-list-item-subtitle>
-            <v-list-item-title>
-              {{ options.startingPrice }} {{ options.currency }}
-            </v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-        <v-list-item>
-          <v-list-item-content>
-            <v-list-item-subtitle class="text-overline">Kwota postąpienia</v-list-item-subtitle>
-            <v-list-item-title>
-              {{ options.minIncrement }} {{ options.currency }}
-            </v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-        <v-list-item>
-          <v-list-item-content>
-            <v-list-item-subtitle class="text-overline">Czas na ofertę</v-list-item-subtitle>
-            <v-list-item-title>{{ timePerBidString }}</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-      </v-list>
-    </v-card>
+    <options-card :options="options" class="mb-4" />
     <v-card outlined class="mb-4">
       <div class="d-flex align-center">
         <v-card-title class="grow">Lista graczy</v-card-title>
@@ -108,9 +66,11 @@
 
 <script>
 import CreatePlayerDialog from '@/components/create-player-dialog.vue';
+import OptionsCard from '@/components/options-card.vue';
 
 export default {
   components: {
+    OptionsCard,
     CreatePlayerDialog,
   },
   props: {
@@ -134,18 +94,6 @@ export default {
     options: {
       type: Object,
       required: true,
-    },
-  },
-  computed: {
-    timePerBidString() {
-      const time = this.options.timePerBid / 1000;
-      const strings = {
-        one: 'sekunda',
-        few: 'sekundy',
-        many: 'sekund',
-      };
-      const rules = new Intl.PluralRules('pl');
-      return `${time} ${strings[rules.select(time)]}`;
     },
   },
   methods: {

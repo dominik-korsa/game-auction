@@ -34,6 +34,7 @@ export default class BaseRoom {
       }
 
       socket.emit('update:code', this.getCode());
+      socket.emit('update:state', this.getState());
       socket.emit('update:players', this.getPlayersObject());
 
       socket.on('create-player', (msg) => {

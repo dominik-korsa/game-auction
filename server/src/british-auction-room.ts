@@ -18,9 +18,9 @@ interface HistoryBid {
 }
 
 export default class BritishAuctionRoom extends BaseRoom {
-  private auctionOptions: BritishAuctionOptions;
+  private readonly auctionOptions: BritishAuctionOptions;
 
-  private bidHistory: HistoryBid[] = [];
+  private readonly bidHistory: HistoryBid[] = [];
 
   private endTime: {
     timestamp: number,
@@ -38,7 +38,6 @@ export default class BritishAuctionRoom extends BaseRoom {
         return;
       }
       socket.emit('update:auction-options', this.auctionOptions);
-      socket.emit('update:state', this.getState());
       socket.emit('update:bid-history', this.bidHistory);
       socket.emit('time-left', this.getTimeLeft());
 

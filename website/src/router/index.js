@@ -4,6 +4,9 @@ import Home from '@/views/home.vue';
 import Join from '@/views/join.vue';
 import Auction from '@/views/auction.vue';
 import Create from '@/views/create.vue';
+import CreateList from '@/views/create-types/list.vue';
+import CreateBritish from '@/views/create-types/british.vue';
+import CreateDutch from '@/views/create-types/dutch.vue';
 
 Vue.use(VueRouter);
 
@@ -25,8 +28,24 @@ const routes = [
   },
   {
     path: '/create',
-    name: 'Create',
     component: Create,
+    children: [
+      {
+        path: '/',
+        name: 'CreateList',
+        component: CreateList,
+      },
+      {
+        path: 'british',
+        name: 'CreateBritish',
+        component: CreateBritish,
+      },
+      {
+        path: 'dutch',
+        name: 'CreateDutch',
+        component: CreateDutch,
+      },
+    ],
   },
   {
     path: '*',
