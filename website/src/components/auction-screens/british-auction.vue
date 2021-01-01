@@ -18,15 +18,12 @@
         <div class="text-h5 text-center mt-3">{{ lastBid.player.name }}</div>
       </div>
     </v-card>
-    <v-sheet color="#fff4" rounded class="mb-2" v-if="this.progress !== null">
-      <v-sheet
-        :width="`${progress*100}%`"
-        :color="progressColor"
-        class="background-transition"
-        height="4"
-        rounded
-      />
-    </v-sheet>
+    <progress-bar
+      v-if="endTimestamp !== null"
+      class="mb-2"
+      :end-timestamp="endTimestamp"
+      :duration="options.timePerBid"
+    />
     <v-card outlined class="overflow-y-auto pr-4 timeline-card grow d-flex flex-column no-basis">
       <v-timeline dense class="grow">
         <v-timeline-item
@@ -63,16 +60,18 @@
       :socket="socket"
       :last-bid-price="lastBidPrice"
       :locked="locked"
+      :bid="bid"
     />
   </v-container>
 </template>
 
 <script>
 import BidPicker from '@/components/bid-picker.vue';
+import ProgressBar from '@/components/progress-bar.vue';
 import _ from 'lodash';
 
 export default {
-  components: { BidPicker },
+  components: { ProgressBar, BidPicker },
   props: {
     options: {
       type: Object,
@@ -107,10 +106,6 @@ export default {
       default: false,
     },
   },
-  data: () => ({
-    timestamp: Date.now(),
-    timestampHandle: null,
-  }),
   computed: {
     bidHistoryItems() {
       return this.bidHistory.map((bid) => ({
@@ -125,29 +120,13 @@ export default {
       if (this.lastBid === null) return null;
       return this.lastBid.price;
     },
-    progress() {
-      if (this.endTimestamp === null) return null;
-      const progress = 1 - (this.endTimestamp - this.timestamp) / this.options.timePerBid;
-      return _.clamp(progress, 0, 1);
-    },
-    progressColor() {
-      if (this.progress < 0.5) return 'white';
-      if (this.progress < 0.75) return 'amber';
-      return 'red';
-    },
   },
   methods: {
-    updateTimestamp() {
-      this.timestamp = Date.now();
-      this.timestampHandle = requestAnimationFrame(this.updateTimestamp);
+    bid(price) {
+      this.socket.emit('bid', {
+        price,
+      });
     },
-  },
-  mounted() {
-    this.updateTimestamp();
-  },
-  destroyed() {
-    cancelAnimationFrame(this.timestampHandle);
-    this.timestampHandle = null;
   },
 };
 </script>
@@ -158,10 +137,6 @@ export default {
 
   .timeline-card {
     min-height: 100px;
-  }
-
-  .background-transition {
-    transition: background-color 400ms;
   }
 }
 </style>

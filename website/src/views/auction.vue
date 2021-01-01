@@ -17,54 +17,13 @@
         </v-card-actions>
       </v-card>
     </v-overlay>
-      <v-app-bar app>
-        <v-btn icon large to="/">
-          <v-icon>
-            mdi-arrow-left
-          </v-icon>
-        </v-btn>
-        <v-spacer />
-        <div v-if="$vuetify.breakpoint.width > 360">
-          Kod: <b>{{ code }}</b>
-        </div>
-        <qr-dialog :code="code">
-          <template #activator="{ on }">
-            <v-btn icon class="ml-1" v-on="on">
-              <v-icon>
-                mdi-qrcode
-              </v-icon>
-            </v-btn>
-          </template>
-        </qr-dialog>
-        <v-btn icon class="ml-1" @click="pause" v-if="state === 'in-progress'">
-          <v-icon>mdi-pause</v-icon>
-        </v-btn>
-        <v-btn v-if="isFullscreen" icon class="ml-1" @click="exitFullscreen">
-          <v-icon >
-            mdi-fullscreen-exit
-          </v-icon>
-        </v-btn>
-        <v-btn v-else icon class="ml-1" @click="requestFullscreen">
-          <v-icon>
-            mdi-fullscreen
-          </v-icon>
-        </v-btn>
-        <create-player-dialog
-          v-if="selfPlayer === null"
-          :socket="socket"
-          :players-array="playersArray"
-        >
-          <template #activator="{ on }">
-            <v-btn
-              color="primary"
-              class="ml-1"
-              v-on="on"
-            >
-              Graj
-            </v-btn>
-          </template>
-        </create-player-dialog>
-      </v-app-bar>
+    <auction-app-bar
+      :code="code"
+      :self-player="selfPlayer"
+      :players-array="playersArray"
+      :socket="socket"
+      :state="state"
+    />
     <not-started-screen
       v-if="state === 'not-started'"
       :players-array="playersArray"
@@ -101,25 +60,45 @@
       :players="players"
       :self-player="selfPlayer"
     />
+    <template v-else-if="options.type === 'sealed-bid'">
+      <sealed-bid-in-progress-screen
+        v-if="state === 'in-progress'"
+        :options="options"
+        :socket="socket"
+        :end-timestamp="endTimestamp"
+        :players-count="playersArray.length"
+        :self-player="selfPlayer"
+        :bid-players="bidPlayers"
+      />
+      <sealed-bid-finished
+        v-else-if="state === 'finished'"
+        :result="result"
+        :players="players"
+        :options="options"
+        :playerId="playerId"
+      />
+    </template>
   </v-main>
 </template>
 
 <script>
 import { io } from 'socket.io-client';
-import QrDialog from '@/components/qr-dialog.vue';
-import CreatePlayerDialog from '@/components/create-player-dialog.vue';
 import _ from 'lodash';
-import NotStartedScreen from '@/components/auction-screens/not-started-screen.vue';
-import BritishAuctionScreen from '@/components/auction-screens/british-auction-screen.vue';
-import DutchAuctionScreen from '@/components/auction-screens/dutch-auction-screen.vue';
+import NotStartedScreen from '@/components/auction-screens/not-started.vue';
+import BritishAuctionScreen from '@/components/auction-screens/british-auction.vue';
+import DutchAuctionScreen from '@/components/auction-screens/dutch-auction.vue';
+import SealedBidInProgressScreen from '@/components/auction-screens/sealed-bid-in-progress.vue';
+import SealedBidFinished from '@/components/auction-screens/sealed-bid-finished.vue';
+import AuctionAppBar from '@/components/auction-app-bar.vue';
 
 export default {
   components: {
+    AuctionAppBar,
+    SealedBidFinished,
+    SealedBidInProgressScreen,
     DutchAuctionScreen,
     BritishAuctionScreen,
     NotStartedScreen,
-    CreatePlayerDialog,
-    QrDialog,
   },
   data: () => ({
     playerId: null,
@@ -133,6 +112,8 @@ export default {
     bidHistory: null,
     currentPrice: null,
     buyer: null,
+    bidPlayers: null,
+    result: null,
     paused: null,
 
     countdownTime: null,
@@ -143,7 +124,10 @@ export default {
   created() {
     navigator.vibrate(0);
     const roomString = sessionStorage.getItem('room');
-    if (roomString === null) this.$router.push('/');
+    if (roomString === null) {
+      this.$router.push('/');
+      return;
+    }
     const room = JSON.parse(roomString);
     this.playerId = room.playerId;
     const url = new URL(`/room/${room.roomId}`, this.$app.serverHost).toString();
@@ -159,6 +143,8 @@ export default {
     this.socket.on('update:bid-history', (history) => { this.bidHistory = history; });
     this.socket.on('update:current-price', (price) => { this.currentPrice = price; });
     this.socket.on('update:buyer', (buyer) => { this.buyer = buyer; });
+    this.socket.on('update:bid-players', (players) => { this.bidPlayers = players; });
+    this.socket.on('update:result', (result) => { this.result = result; });
     this.socket.on('update:paused', (paused) => { this.paused = paused; });
     this.socket.on('time-left', (timeLeft) => {
       if (timeLeft === null) this.endTimestamp = null;
@@ -178,6 +164,8 @@ export default {
       this.bidHistory = null;
       this.currentPrice = null;
       this.buyer = null;
+      this.bidPlayers = null;
+      this.result = null;
       this.paused = null;
 
       this.countdownTime = null;
@@ -194,21 +182,8 @@ export default {
       console.error(error);
       this.$router.push('/');
     });
-    this.updateIsFullscreen();
-    document.addEventListener('fullscreenchange', this.updateIsFullscreen);
   },
   methods: {
-    async requestFullscreen() {
-      await document.documentElement.requestFullscreen({
-        navigationUI: 'hide',
-      });
-    },
-    async exitFullscreen() {
-      await document.exitFullscreen();
-    },
-    updateIsFullscreen() {
-      this.isFullscreen = document.fullscreenElement !== null;
-    },
     async countdown() {
       for (let i = 3; i > 0; i -= 1) {
         this.countdownTime = i;
@@ -218,9 +193,6 @@ export default {
       }
       navigator.vibrate(500);
     },
-    pause() {
-      this.socket.emit('pause');
-    },
     resume() {
       this.socket.emit('resume');
     },
@@ -228,15 +200,17 @@ export default {
   computed: {
     loadingText() {
       if (!this.connected) return 'Łączenie z serwerem';
-      if (!this.options) return 'Wczytywanie opcji aukcji';
-      if (!this.players) return 'Wczytywanie listy graczy';
-      if (!this.state) return 'Wczytywanie stanu gry';
+      if (this.options === null) return 'Wczytywanie opcji aukcji';
+      if (this.players === null) return 'Wczytywanie listy graczy';
+      if (this.state === null) return 'Wczytywanie stanu gry';
       if (this.paused === null) return 'Wczytywanie informacji o pauzie';
       if (this.options.type === 'british') {
-        if (!this.bidHistory) return 'Wczytywanie historii ofert';
-      }
-      if (this.options.type === 'dutch') {
+        if (this.bidHistory === null) return 'Wczytywanie historii ofert';
+      } else if (this.options.type === 'dutch') {
         if (['in-progress', 'finished'].includes(this.state) && this.currentPrice === null) return 'Wczytywanie aktualnej ceny';
+      } else if (this.options.type === 'sealed-bid') {
+        if (this.bidPlayers === null) return 'Wczytywanie listy ofert graczy';
+        if (this.state === 'finished' && this.result === null) return 'Wczytywanie wyniku';
       }
       return null;
     },
@@ -262,8 +236,6 @@ export default {
     },
   },
   destroyed() {
-    if (document.fullscreenElement !== null) document.exitFullscreen();
-    document.removeEventListener('fullscreenchange', this.updateIsFullscreen);
     if (this.socket) this.socket.close();
   },
 };

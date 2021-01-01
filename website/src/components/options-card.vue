@@ -62,15 +62,33 @@
             </v-list-item-title>
           </v-list-item-content>
         </v-list-item>
+      </template>
+      <template v-if="options.type === 'sealed-bid'">
         <v-list-item>
           <v-list-item-content>
-            <v-list-item-subtitle class="text-overline">Łączny czas</v-list-item-subtitle>
+            <v-list-item-subtitle class="text-overline">Cena minimalna</v-list-item-subtitle>
             <v-list-item-title>
-              {{ totalTimeString }}
+              {{ options.minPrice }} {{ options.currency }}
+            </v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item>
+          <v-list-item-content>
+            <v-list-item-subtitle class="text-overline">Cena dla nabywcy</v-list-item-subtitle>
+            <v-list-item-title>
+              {{ options.secondPriceMode ? 'Druga najwyższa oferta' : 'Najwyższa (swoja) oferta' }}
             </v-list-item-title>
           </v-list-item-content>
         </v-list-item>
       </template>
+      <v-list-item v-if="['dutch', 'sealed-bid'].includes(options.type)">
+        <v-list-item-content>
+          <v-list-item-subtitle class="text-overline">Łączny czas</v-list-item-subtitle>
+          <v-list-item-title>
+            {{ totalTimeString }}
+          </v-list-item-title>
+        </v-list-item-content>
+      </v-list-item>
     </v-list>
   </v-card>
 </template>

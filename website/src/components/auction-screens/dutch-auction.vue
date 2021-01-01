@@ -101,9 +101,5 @@ export default {
 <style lang="scss">
 .dutch-auction-screen {
   max-width: 600px;
-
-  .background-transition {
-    transition: background-color 400ms;
-  }
 }
 </style>

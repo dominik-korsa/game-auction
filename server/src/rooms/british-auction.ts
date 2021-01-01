@@ -4,8 +4,8 @@ import * as t from 'io-ts';
 import _ from 'lodash';
 import { nanoid } from 'nanoid';
 import SocketIO from 'socket.io';
-import BaseRoom from './base-room';
-import { BritishAuctionOptions } from './types';
+import { BritishAuctionOptions } from '../types';
+import BaseRoom from './base';
 
 const InBid = t.type({
   price: t.number,
@@ -42,35 +42,43 @@ export default class BritishAuctionRoom extends BaseRoom {
       socket.emit('time-left', this.getTimeLeft());
 
       socket.on('bid', (msg) => {
-        pipe(InBid.decode(msg), fold(
-          (error) => {
-            console.error(error);
-          },
-          (body) => {
-            if (this.getState() !== 'in-progress') {
-              console.warn(`Bid attempted in ${this.getState()} state`);
-              return;
-            }
-            const lastBid = _.last(this.bidHistory);
-            const minPrice = lastBid === undefined ? this.auctionOptions.startingPrice : lastBid.price + this.auctionOptions.minIncrement;
-            if (body.price < minPrice) {
-              console.warn(`${body.price} less than min price (${minPrice})`);
-              return;
-            }
-            if (body.price % this.auctionOptions.multiplier !== 0) {
-              console.warn(`${body.price} not a multiple of (${this.auctionOptions.multiplier})`);
-              return;
-            }
-            this.bidHistory.push({
-              id: nanoid(),
-              playerId,
-              price: body.price,
-            });
-            this.startTimeout();
-            this.socketNamespace.emit('lock');
-            this.socketNamespace.emit('update:bid-history', this.bidHistory);
-          },
-        ));
+        pipe(
+          InBid.decode(msg),
+          fold(
+            (error) => {
+              console.error(error);
+            },
+            (body) => {
+              if (this.getPaused()) {
+                console.warn('Auction paused');
+                return;
+              }
+              if (this.getState() !== 'in-progress') {
+                console.warn(`Bid attempted in ${this.getState()} state`);
+                return;
+              }
+
+              const lastBid = _.last(this.bidHistory);
+              const minPrice = lastBid === undefined ? this.auctionOptions.startingPrice : lastBid.price + this.auctionOptions.minIncrement;
+              if (body.price < minPrice) {
+                console.warn(`${body.price} less than min price (${minPrice})`);
+                return;
+              }
+              if (body.price % this.auctionOptions.multiplier !== 0) {
+                console.warn(`${body.price} not a multiple of (${this.auctionOptions.multiplier})`);
+                return;
+              }
+              this.bidHistory.push({
+                id: nanoid(),
+                playerId,
+                price: body.price,
+              });
+              this.startTimeout();
+              this.socketNamespace.emit('lock');
+              this.socketNamespace.emit('update:bid-history', this.bidHistory);
+            },
+          ),
+        );
       });
 
       socket.on('start-auction', async () => {

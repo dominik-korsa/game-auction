@@ -1,6 +1,6 @@
 import SocketIO from 'socket.io';
-import BaseRoom from './base-room';
-import { DutchAuctionOptions } from './types';
+import { DutchAuctionOptions } from '../types';
+import BaseRoom from './base';
 
 export default class DutchAuctionRoom extends BaseRoom {
   private readonly auctionOptions: DutchAuctionOptions;
@@ -33,11 +33,14 @@ export default class DutchAuctionRoom extends BaseRoom {
       socket.emit('update:buyer', this.buyer);
 
       socket.on('bid', () => {
+        if (this.getPaused()) {
+          console.warn('Auction paused');
+          return;
+        }
         if (this.getState() !== 'in-progress') {
           console.warn(`Bid attempted in ${this.getState()} state`);
           return;
         }
-
         if (this.currentPrice === null) {
           console.warn('No current price');
           return;

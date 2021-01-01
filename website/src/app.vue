@@ -10,6 +10,10 @@
   }
 
   .no-basis {
-    flex-basis: 0;
+    flex-basis: 0 !important;
+  }
+
+  .background-transition {
+    transition: background-color 400ms;
   }
 </style>

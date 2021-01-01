@@ -14,64 +14,70 @@ export default class RestApi {
     this.functions = functions;
     this.app = app;
     this.app.post('/api/create-room', (req, res) => {
-      pipe(CreateRoomBody.decode(req.body), fold(
-        (schemaErrors) => {
-          res.status(400).send({
-            schemaErrors,
-            message: 'Request body doesn\'t match schema',
-          });
-        },
-        (body) => {
-          try {
-            const roomId = this.functions.createRoom(body.auctionOptions);
-            const playerId = nanoid();
-            res.send({
-              roomId,
-              playerId,
-              roomToken: createRoomToken(roomId, playerId),
+      pipe(
+        CreateRoomBody.decode(req.body),
+        fold(
+          (schemaErrors) => {
+            res.status(400).send({
+              schemaErrors,
+              message: 'Request body doesn\'t match schema',
             });
-          } catch (error) {
-            console.error(error);
-            res.status(500).send({
-              message: 'Could not create room',
-            });
-          }
-        },
-      ));
+          },
+          (body) => {
+            try {
+              const roomId = this.functions.createRoom(body.auctionOptions);
+              const playerId = nanoid();
+              res.send({
+                roomId,
+                playerId,
+                roomToken: createRoomToken(roomId, playerId),
+              });
+            } catch (error) {
+              console.error(error);
+              res.status(500).send({
+                message: 'Could not create room',
+              });
+            }
+          },
+        ),
+      );
     });
 
     this.app.post('/api/join-room', (req, res) => {
-      pipe(JoinRoomBody.decode(req.body), fold(
-        (schemaErrors) => {
-          res.status(400).send({
-            schemaErrors,
-            message: 'Request body doesn\'t match schema',
-          });
-        },
-        (body) => {
-          try {
-            const playerId = nanoid();
-            const roomId = this.functions.joinRoom(body.code);
-            if (!roomId) {
+      pipe(
+        JoinRoomBody.decode(req.body),
+        fold(
+          (schemaErrors) => {
+            res.status(400).send({
+              schemaErrors,
+              message: 'Request body doesn\'t match schema',
+            });
+          },
+          (body) => {
+            try {
+              const playerId = nanoid();
+              const roomId = this.functions.joinRoom(body.code);
+              if (!roomId) {
+                res.send({
+                  found: false,
+                });
+                return;
+              }
               res.send({
-                found: false,
+                found: true,
+                roomId,
+                playerId,
+                roomToken: createRoomToken(roomId, playerId),
               });
-              return;
+            } catch (error) {
+              console.error(error);
+              res.status(500).send({
+                message: 'Could not join room',
+              });
             }
-            res.send({
-              found: true,
-              roomId,
-              playerId,
-              roomToken: createRoomToken(roomId, playerId),
-            });
-          } catch (error) {
-            console.error(error);
-            res.status(500).send({
-              message: 'Could not join room',
-            });
-          }
-        },
-      ));
+          },
+        ),
+      );
     });
   }
 }

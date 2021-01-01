@@ -6,10 +6,11 @@ import dotenv from 'dotenv';
 import express from 'express';
 import _ from 'lodash';
 import SocketIO from 'socket.io';
-import BaseRoom from './base-room';
-import BritishAuctionRoom from './british-auction-room';
-import DutchAuctionRoom from './dutch-auction-room';
 import RestApi from './rest-api';
+import BaseRoom from './rooms/base';
+import BritishAuctionRoom from './rooms/british-auction';
+import DutchAuctionRoom from './rooms/dutch-auction';
+import SealedBidAuctionRoom from './rooms/sealed-bid-auction';
 import { AuctionOptions } from './types';
 import { requireEnv } from './utils';
 
@@ -51,6 +52,7 @@ const restApi = new RestApi(app, {
     let room;
     if (auctionOptions.type === 'british') room = new BritishAuctionRoom(socketServer, code, auctionOptions);
     else if (auctionOptions.type === 'dutch') room = new DutchAuctionRoom(socketServer, code, auctionOptions);
+    else if (auctionOptions.type === 'sealed-bid') room = new SealedBidAuctionRoom(socketServer, code, auctionOptions);
     else throw new Error('This type of auction is not yet supported');
     rooms.set(room.id, room);
     return room.id;

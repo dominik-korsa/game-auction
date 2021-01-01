@@ -3,8 +3,8 @@ import { pipe } from 'fp-ts/pipeable';
 import { nanoid } from 'nanoid';
 import SocketIO from 'socket.io';
 import { ExtendedError } from 'socket.io/dist/namespace';
-import { InCreatePlayer, RoomPlayer, RoomState } from './types';
-import { verifyRoomToken } from './utils';
+import { InCreatePlayer, RoomPlayer, RoomState } from '../types';
+import { verifyRoomToken } from '../utils';
 
 export default abstract class BaseRoom {
   public readonly id: string;
@@ -41,19 +41,22 @@ export default abstract class BaseRoom {
       socket.emit('update:paused', this.paused);
 
       socket.on('create-player', (msg) => {
-        pipe(InCreatePlayer.decode(msg), fold(
-          (error) => {
-            console.error(error);
-          },
-          (body) => {
-            this.players.set(playerId, {
-              id: playerId,
-              color: body.color,
-              name: body.name,
-            });
-            this.socketNamespace.emit('update:players', this.getPlayersObject());
-          },
-        ));
+        pipe(
+          InCreatePlayer.decode(msg),
+          fold(
+            (error) => {
+              console.error(error);
+            },
+            (body) => {
+              this.players.set(playerId, {
+                id: playerId,
+                color: body.color,
+                name: body.name,
+              });
+              this.socketNamespace.emit('update:players', this.getPlayersObject());
+            },
+          ),
+        );
       });
 
       socket.on('disconnect', () => {
@@ -128,6 +131,10 @@ export default abstract class BaseRoom {
 
   protected getState(): RoomState {
     return this.state;
+  }
+
+  protected getPaused(): boolean {
+    return this.paused;
   }
 
   protected setState(state: RoomState): void {

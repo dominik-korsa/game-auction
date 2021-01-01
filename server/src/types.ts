@@ -26,7 +26,17 @@ export const DutchAuctionOptions = t.type({
 });
 export type DutchAuctionOptions = t.TypeOf<typeof DutchAuctionOptions>;
 
-export const AuctionOptions = t.union([BritishAuctionOptions, DutchAuctionOptions]);
+export const SealedBidAuctionOptions = t.type({
+  type: t.literal('sealed-bid'),
+  currency: t.string,
+  multiplier: t.number,
+  minPrice: t.number,
+  secondPriceMode: t.boolean,
+  totalTime: t.number,
+});
+export type SealedBidAuctionOptions = t.TypeOf<typeof SealedBidAuctionOptions>;
+
+export const AuctionOptions = t.union([BritishAuctionOptions, DutchAuctionOptions, SealedBidAuctionOptions]);
 export type AuctionOptions = t.TypeOf<typeof AuctionOptions>;
 
 export const CreateRoomBody = t.type({
