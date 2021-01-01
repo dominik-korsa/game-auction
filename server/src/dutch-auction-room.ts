@@ -47,6 +47,10 @@ export default class DutchAuctionRoom extends BaseRoom {
           clearTimeout(this.timeoutId);
           this.timeoutId = null;
         }
+        if (this.intervalId !== null) {
+          clearInterval(this.intervalId);
+          this.intervalId = null;
+        }
         this.buyer = {
           playerId,
           price: this.currentPrice,

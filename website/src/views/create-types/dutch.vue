@@ -89,9 +89,9 @@ export default {
       formValid: null,
       defaultCurrencies: ['€', '$', '£', '₿'],
       currencyInput: '€',
-      multiplierInput: '1',
+      multiplierInput: '10',
       startingPriceInput: '1000',
-      endingPriceInput: '1',
+      endingPriceInput: '10',
       totalTimeInput: 60,
       loading: false,
     };
