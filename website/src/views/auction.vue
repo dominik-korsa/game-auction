@@ -119,7 +119,6 @@ export default {
     countdownTime: null,
     endTimestamp: null,
     lockTimeoutId: null,
-    isFullscreen: false,
   }),
   created() {
     navigator.vibrate(0);

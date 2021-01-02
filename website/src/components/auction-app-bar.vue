@@ -58,6 +58,9 @@ export default {
     CreatePlayerDialog,
     QrDialog,
   },
+  data: () => ({
+    isFullscreen: false,
+  }),
   created() {
     this.updateIsFullscreen();
     document.addEventListener('fullscreenchange', this.updateIsFullscreen);
