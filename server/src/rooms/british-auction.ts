@@ -120,6 +120,6 @@ export default class BritishAuctionRoom extends BaseRoom {
   }
 
   protected resume(): void {
-    this.startTimeout();
+    if (this.bidHistory.length !== 0) this.startTimeout();
   }
 }
