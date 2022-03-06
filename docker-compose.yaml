@@ -5,7 +5,7 @@ services:
       - traefik-proxy
       - default
     environment:
-      ROOM_JWT_SECRET=${ROOM_JWT_SECRET}
+      ROOM_JWT_SECRET: ${ROOM_JWT_SECRET}
     labels:
       - traefik.enable=true
       - traefik.http.routers.auction-http.rule=Host(`auction.dominik-korsa.tk`)
