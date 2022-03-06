@@ -1,0 +1,21 @@
+services:
+  server:
+    build: .
+    networks:
+      - traefik-proxy
+      - default
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.auction-http.rule=Host(`auction.dominik-korsa.tk`)
+      - traefik.http.routers.auction-http.entrypoints=http
+      - traefik.http.routers.auction-http.middlewares=redirect
+      - traefik.http.routers.auction-https.rule=Host(`auction.dominik-korsa.tk`)
+      - traefik.http.routers.auction-https.entrypoints=https
+      - traefik.http.routers.auction-https.tls=true
+      - traefik.http.routers.auction-https.tls.certresolver=letsencrypt
+      - traefik.http.services.auction-backend.loadbalancer.server.port=80
+      - traefik.http.middlewares.redirect.redirectscheme.scheme=https
+networks:
+  traefik-proxy:
+    external: true
+    name: traefik-proxy
