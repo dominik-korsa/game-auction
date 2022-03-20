@@ -57,7 +57,7 @@
       block
       :disabled="playersArray.length < 2"
       @click="startAuction"
-      class="shrink"
+      class="no-grow"
     >
       Rozpocznij aukcję
     </v-btn>
@@ -107,5 +107,9 @@ export default {
 <style lang="scss">
 .auction-not-started-screen {
   max-width: 600px;
+
+  .no-grow {
+    flex-grow: 0;
+  }
 }
 </style>
