@@ -112,7 +112,7 @@ export default {
       if (
         this.multiplierError === null
         && startingPrice % parseFloat(this.multiplierInput) !== 0
-      ) return 'Cena początkowa musi być wieloktonością mnożnika';
+      ) return 'Cena początkowa musi być wielokrotnością mnożnika';
       return null;
     },
     endingPriceError() {
@@ -127,7 +127,7 @@ export default {
       if (
         this.multiplierError === null
         && endingPrice % parseFloat(this.multiplierInput) !== 0
-      ) return 'Cena końcowa musi być wieloktonością mnożnika';
+      ) return 'Cena końcowa musi być wielokrotnością mnożnika';
       return null;
     },
   },

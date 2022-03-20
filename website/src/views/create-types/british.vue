@@ -105,7 +105,7 @@ export default {
       if (
         this.multiplierError === null
         && startingPrice % parseFloat(this.multiplierInput) !== 0
-      ) return 'Cena wywoławcza musi być wieloktonością mnożnika';
+      ) return 'Cena wywoławcza musi być wielokrotnością mnożnika';
       return null;
     },
     minIncrementError() {
@@ -116,7 +116,7 @@ export default {
       if (
         this.multiplierError === null
         && minIncrement % parseFloat(this.multiplierInput) !== 0
-      ) return 'Kwota postąpienia musi być wieloktonością mnożnika';
+      ) return 'Kwota postąpienia musi być wielokrotnością mnożnika';
       return null;
     },
   },
