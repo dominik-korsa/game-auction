@@ -8,10 +8,10 @@ services:
       ROOM_JWT_SECRET: ${ROOM_JWT_SECRET}
     labels:
       - traefik.enable=true
-      - traefik.http.routers.auction-http.rule=Host(`auction.dominik-korsa.tk`)
+      - traefik.http.routers.auction-http.rule=Host(`auction.dk-gl.eu`)
       - traefik.http.routers.auction-http.entrypoints=http
       - traefik.http.routers.auction-http.middlewares=redirect
-      - traefik.http.routers.auction-https.rule=Host(`auction.dominik-korsa.tk`)
+      - traefik.http.routers.auction-https.rule=Host(`auction.dk-gl.eu`)
       - traefik.http.routers.auction-https.entrypoints=https
       - traefik.http.routers.auction-https.tls=true
       - traefik.http.routers.auction-https.tls.certresolver=letsencrypt
